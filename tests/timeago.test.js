@@ -9,7 +9,7 @@ describe('timeago', function ( ) {
   var env = require('../env')();
 
   var ctx = {};
-  ctx.data = require('../lib/data')(env, ctx);
+  ctx.ddata = require('../lib/data/ddata')();
   ctx.notifications = require('../lib/notifications')(env, ctx);
 
   function freshSBX() {
@@ -21,33 +21,33 @@ describe('timeago', function ( ) {
 
   it('Not trigger an alarm when data is current', function (done) {
     ctx.notifications.initRequests();
-    ctx.data.sgvs = [{mills: Date.now(), mgdl: 100, type: 'sgv'}];
+    ctx.ddata.sgvs = [{mills: Date.now(), mgdl: 100, type: 'sgv'}];
 
     var sbx = freshSBX();
     timeago.checkNotifications(sbx);
-    should.not.exist(ctx.notifications.findHighestAlarm());
+    should.not.exist(ctx.notifications.findHighestAlarm('Time Ago'));
 
     done();
   });
 
   it('Not trigger an alarm with future data', function (done) {
     ctx.notifications.initRequests();
-    ctx.data.sgvs = [{mills: Date.now() + times.mins(15).msecs, mgdl: 100, type: 'sgv'}];
+    ctx.ddata.sgvs = [{mills: Date.now() + times.mins(15).msecs, mgdl: 100, type: 'sgv'}];
 
     var sbx = freshSBX();
     timeago.checkNotifications(sbx);
-    should.not.exist(ctx.notifications.findHighestAlarm());
+    should.not.exist(ctx.notifications.findHighestAlarm('Time Ago'));
 
     done();
   });
 
   it('should trigger a warning when data older than 15m', function (done) {
     ctx.notifications.initRequests();
-    ctx.data.sgvs = [{mills: Date.now() - times.mins(16).msecs, mgdl: 100, type: 'sgv'}];
+    ctx.ddata.sgvs = [{mills: Date.now() - times.mins(16).msecs, mgdl: 100, type: 'sgv'}];
 
     var sbx = freshSBX();
     timeago.checkNotifications(sbx);
-    var highest = ctx.notifications.findHighestAlarm();
+    var highest = ctx.notifications.findHighestAlarm('Time Ago');
     highest.level.should.equal(levels.WARN);
     highest.message.should.equal('Last received: 16 mins ago\nBG Now: 100 mg/dl');
     done();
@@ -55,11 +55,11 @@ describe('timeago', function ( ) {
 
   it('should trigger an urgent alarm when data older than 30m', function (done) {
     ctx.notifications.initRequests();
-    ctx.data.sgvs = [{mills: Date.now() - times.mins(31).msecs, mgdl: 100, type: 'sgv'}];
+    ctx.ddata.sgvs = [{mills: Date.now() - times.mins(31).msecs, mgdl: 100, type: 'sgv'}];
 
     var sbx = freshSBX();
     timeago.checkNotifications(sbx);
-    var highest = ctx.notifications.findHighestAlarm();
+    var highest = ctx.notifications.findHighestAlarm('Time Ago');
     highest.level.should.equal(levels.URGENT);
     highest.message.should.equal('Last received: 31 mins ago\nBG Now: 100 mg/dl');
     done();
